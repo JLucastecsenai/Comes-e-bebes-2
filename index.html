@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Água Diária</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 500px;
+            margin: auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        input, button {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            font-size: 18px;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #resultado, #horarios {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e7f3e7;
+            border-left: 6px solid #4CAF50;
+        }
+        #horarios {
+            background-color: #e0f7fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Calculadora de Água Diária</h1>
+        <label for="peso">Peso (kg):</label>
+        <input type="number" id="peso" placeholder="Digite seu peso em kg">
+
+        <label for="idade">Idade (anos):</label>
+        <input type="number" id="idade" placeholder="Digite sua idade em anos">
+
+        <label for="altura">Altura (cm):</label>
+        <input type="number" id="altura" placeholder="Digite sua altura em cm">
+
+        <label for="acorda">Hora que acorda:</label>
+        <input type="time" id="acorda">
+
+        <label for="dorme">Hora que dorme:</label>
+        <input type="time" id="dorme">
+
+        <button onclick="calcularAgua()">Calcular</button>
+
+        <div id="resultado"></div>
+        <div id="horarios"></div>
+    </div>
+
+    <script>
+        function calcularAgua() {
+            // Obter valores do formulário
+            let peso = document.getElementById('peso').value;
+            let idade = document.getElementById('idade').value;
+            let altura = document.getElementById('altura').value;
+            let horaAcorda = document.getElementById('acorda').value;
+            let horaDorme = document.getElementById('dorme').value;
+
+            // Verificar se todos os campos estão preenchidos
+            if (peso === "" || idade === "" || altura === "" || horaAcorda === "" || horaDorme === "") {
+                alert("Por favor, preencha todos os campos.");
+                return;
+            }
+
+            // Converter valores para números
+            peso = parseFloat(peso);
+            idade = parseInt(idade);
+            altura = parseFloat(altura);
+
+            // Fórmula simples para calcular a necessidade de água com base no peso
+            let aguaPorDiaMl = peso * 35;
+
+            // Ajustes baseados na idade
+            if (idade > 55) {
+                aguaPorDiaMl *= 0.9; // Reduz 10% se a pessoa tiver mais de 55 anos
+            } else if (idade < 30) {
+                aguaPorDiaMl *= 1.1; // Aumenta 10% se a pessoa tiver menos de 30 anos
+            }
+
+            // Ajustes baseados na altura (opcional, pode ser omitido se preferir)
+            if (altura > 175) {
+                aguaPorDiaMl += 200; // Adiciona 200 ml se a altura for maior que 1,75 m
+            }
+
+            // Calcula a quantidade de água por copo (dividido em 8 copos diários)
+            let aguaPorCopo = aguaPorDiaMl / 8;
+
+            // Calcula a quantidade total em litros
+            let litrosPorDia = aguaPorDiaMl / 1000;
+
+            // Calcula a distribuição dos copos entre o horário de acordar e o horário de dormir
+            let horarios = gerarHorarios(horaAcorda, horaDorme, aguaPorCopo);
+
+            // Exibir o resultado na página
+            document.getElementById('resultado').innerHTML = `
+                Você deve beber aproximadamente <strong>${litrosPorDia.toFixed(2)} litros</strong> de água por dia.<br>
+                Isso equivale a aproximadamente <strong>${aguaPorCopo.toFixed(0)} ml</strong> por copo, considerando 8 copos diários.
+            `;
+
+            document.getElementById('horarios').innerHTML = `
+                <h2>Horários sugeridos para beber água:</h2>
+                <ul>${horarios.map(horario => `<li>${horario}</li>`).join('')}</ul>
+            `;
+        }
+
+        function gerarHorarios(horaAcorda, horaDorme, aguaPorCopo) {
+            // Converter horários para objetos Date
+            let [horaAcordaH, horaAcordaM] = horaAcorda.split(':').map(Number);
+            let [horaDormeH, horaDormeM] = horaDorme.split(':').map(Number);
+
+            // Criar objetos Date para hora de acordar e hora de dormir
+            let acorda = new Date();
+            acorda.setHours(horaAcordaH, horaAcordaM, 0, 0);
+            let dorme = new Date();
+            dorme.setHours(horaDormeH, horaDormeM, 0, 0);
+
+            // Calcular intervalo em horas
+            let diffHoras = (dorme - acorda) / (1000 * 60 * 60);
+            let intervalo = diffHoras / 8;
+
+            // Gerar horários
+            const horarios = [];
+            for (let i = 0; i < 8; i++) {
+                let hora = new Date(acorda.getTime() + i * intervalo * 60 * 60 * 1000);
+                let horas = hora.getHours();
+                let minutos = hora.getMinutes();
+                let periodo = horas >= 12 ? "PM" : "AM";
+
+                if (horas > 12) horas -= 12;
+                if (horas === 0) horas = 12;
+
+                horarios.push(`${horas}:${minutos < 10 ? '0' : ''}${minutos} ${periodo} - ${aguaPorCopo.toFixed(0)} ml`);
+            }
+
+            return horarios;
+        }
+    </script>
+</body>
+</html>
